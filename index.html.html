@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico Financiero — Coach Lab BBVA</title>
+<style>
+  :root{
+    --purple:#4d3fa8;
+    --purple-dark:#2c2456;
+    --title-navy:#1a1442;
+    --subtitle:#4a4666;
+    --bg-page:#f6f6f8;
+    --card-bg:#ffffff;
+    --line:#ececf2;
+    --good-bg:#e2f6ea;
+    --good-text:#1f9c56;
+    --warn-bg:#fdf0d6;
+    --warn-text:#c98a1c;
+    --up:#2fa360;
+    --down:#d1483a;
+    --gold:#f4d035;
+    --green-icon:#3ec17a;
+    --gray-label:#8a8798;
+    --sans: -apple-system, "SF Pro Display", "Segoe UI", Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:linear-gradient(180deg,#f6f4fb 0%,#dedbe4 100%);
+    font-family:var(--sans);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 16px;
+  }
+
+  /* ── Buscador arriba ────────────────────────────────── */
+  .search-container{
+    width:100%;
+    max-width:520px;
+    margin-bottom:32px;
+    text-align:center;
+  }
+  .search-title{
+    font-size:22px;
+    font-weight:800;
+    color:var(--title-navy);
+    margin:0 0 8px;
+    letter-spacing:-0.3px;
+  }
+  .search-subtitle{
+    font-size:14px;
+    color:var(--subtitle);
+    margin:0 0 20px;
+    line-height:1.5;
+  }
+  .search-box{
+    position:relative;
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 4px 20px -8px rgba(20,10,40,0.15);
+    padding:6px 6px 6px 44px;
+    display:flex;
+    align-items:center;
+    transition:box-shadow 0.2s;
+  }
+  .search-box:focus-within{
+    box-shadow:0 6px 26px -6px rgba(77,63,168,0.35);
+  }
+  .search-box svg.search-ico{
+    position:absolute; left:15px; top:50%;
+    transform:translateY(-50%); color:var(--gray-label);
+  }
+  .search-input{
+    flex:1; border:none; outline:none;
+    padding:12px 6px;
+    font-size:15px;
+    font-family:var(--sans);
+    color:var(--title-navy);
+    background:transparent;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  .search-input::placeholder{
+    color:var(--gray-label);
+    letter-spacing:0.5px;
+    text-transform:none;
+    font-weight:400;
+  }
+  .search-btn{
+    background:var(--purple);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:10px 18px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:var(--sans);
+    transition:background 0.15s;
+  }
+  .search-btn:hover{ background:var(--purple-dark); }
+  .search-error{
+    margin-top:10px;
+    color:#c94040;
+    font-size:13px;
+    display:none;
+  }
+  .search-error.visible{ display:block; }
+
+  /* Placeholder */
+  .placeholder{
+    width:100%;
+    max-width:520px;
+    text-align:center;
+    color:var(--gray-label);
+    font-size:13px;
+    padding:40px 20px;
+    background:rgba(255,255,255,0.4);
+    border-radius:16px;
+    border:1.5px dashed #cfcbdd;
+  }
+  .placeholder svg{
+    display:block; margin:0 auto 12px; opacity:0.35;
+  }
+
+  /* Móvil */
+  .phone{
+    width:340px;
+    background:#111;
+    border-radius:42px;
+    padding:12px;
+    box-shadow:0 30px 60px -20px rgba(20,10,40,0.45);
+    display:none;
+  }
+  .phone.visible{ display:block; }
+  .screen{
+    background:var(--bg-page);
+    border-radius:30px;
+    overflow:hidden;
+    height:780px;
+    display:flex;
+    flex-direction:column;
+  }
+  .statusbar{ height:30px; flex-shrink:0; }
+  .header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 18px 14px;
+  }
+  .header .side{
+    display:flex; flex-direction:column; align-items:center;
+    gap:2px; min-width:44px;
+  }
+  .header .side svg{ display:block; }
+  .header .side span{ font-size:11px; color:var(--title-navy); font-weight:500; }
+  .header .title{ font-size:15px; font-weight:700; color:var(--title-navy); }
+  .header .side.right{ align-items:center; }
+  .content{
+    flex:1; overflow-y:auto; padding:4px 20px 20px;
+  }
+  .content::-webkit-scrollbar{ display:none; }
+
+  .ai-badge{
+    display:flex; align-items:center; justify-content:center;
+    gap:6px; font-size:12px; font-weight:600;
+    color:var(--purple); margin:6px 0 14px;
+  }
+
+  .diagnostico h1{
+    font-size:22px; font-weight:800;
+    color:var(--title-navy);
+    text-align:center;
+    margin:0 0 10px;
+    line-height:1.25;
+  }
+  .diagnostico p{
+    font-size:14px; color:var(--subtitle);
+    text-align:center; line-height:1.5;
+    margin:0 0 18px;
+  }
+
+  /* Explicabilidad discreta */
+  .exp-toggle-wrap{
+    display:flex; align-items:center; justify-content:center;
+    gap:4px; margin:-4px auto 18px;
+  }
+  .explicabilidad-toggle{
+    display:flex; align-items:center; gap:6px;
+    font-size:12.5px; color:var(--purple); font-weight:600;
+    background:none; border:none;
+    padding:6px 10px; cursor:pointer;
+    font-family:var(--sans);
+  }
+  .explicabilidad-toggle svg{
+    width:11px; height:11px; transition:transform 0.25s;
+  }
+  .explicabilidad-toggle.open svg{ transform:rotate(180deg); }
+  .exp-help{
+    position:relative;
+    width:16px; height:16px; border-radius:50%;
+    border:1.5px solid var(--gray-label);
+    color:var(--gray-label);
+    background:transparent;
+    font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0; flex-shrink:0;
+    transition:all 0.15s;
+  }
+  .exp-help:hover{ border-color:var(--purple); color:var(--purple); }
+  .exp-tooltip{
+    position:absolute; top:calc(100% + 8px); right:-8px;
+    background:var(--title-navy); color:#fff;
+    font-size:11.5px; font-weight:500; line-height:1.45;
+    padding:9px 11px; border-radius:8px;
+    width:220px; text-align:left;
+    box-shadow:0 6px 20px rgba(20,10,40,0.25);
+    opacity:0; pointer-events:none;
+    transition:opacity 0.18s; z-index:10;
+  }
+  .exp-tooltip::before{
+    content:""; position:absolute; top:-5px; right:11px;
+    width:10px; height:10px;
+    background:var(--title-navy); transform:rotate(45deg);
+  }
+  .exp-help.active .exp-tooltip{ opacity:1; pointer-events:auto; }
+
+  .explicabilidad-panel{ max-height:0; overflow:hidden; transition:max-height 0.4s ease; }
+  .explicabilidad-panel.open{ max-height:2400px; }
+  .explicabilidad-inner{
+    background:var(--card-bg); border-radius:14px;
+    padding:16px 16px 14px; margin-bottom:20px;
+    box-shadow:0 1px 3px rgba(20,10,40,0.05);
+  }
+  .exp-section{ margin-bottom:14px; }
+  .exp-section:last-child{ margin-bottom:0; }
+  .exp-title{
+    font-size:11px; text-transform:uppercase;
+    letter-spacing:0.6px; font-weight:700;
+    color:var(--gray-label); margin-bottom:6px;
+  }
+  .exp-text{ font-size:12.5px; line-height:1.5; color:var(--subtitle); margin:0; }
+  .exp-list{ margin:0; padding:0; list-style:none; }
+  .exp-list li{
+    font-size:12.5px; line-height:1.5; color:var(--subtitle);
+    padding:4px 0 4px 14px; position:relative;
+  }
+  .exp-list li::before{
+    content:""; position:absolute; left:0; top:11px;
+    width:4px; height:4px; border-radius:50%;
+    background:var(--purple); opacity:0.55;
+  }
+  .exp-reco{
+    background:#f4f2fb; border-left:2.5px solid var(--purple);
+    border-radius:4px; padding:9px 11px;
+    font-size:12.5px; line-height:1.5;
+    color:var(--purple-dark);
+  }
+
+  /* ── Tarjeta ESTILO ORIGINAL ─────────────────── */
+  .card{
+    background:var(--card-bg);
+    border-radius:18px;
+    padding:20px 18px 16px;
+    box-shadow:0 1px 3px rgba(20,10,40,0.06);
+  }
+  .card-header{
+    display:flex; align-items:center; gap:6px;
+    font-size:15px; font-weight:700;
+    color:var(--title-navy); margin-bottom:16px;
+  }
+  .help-icon{
+    width:16px; height:16px; border-radius:50%;
+    border:1.6px solid var(--purple);
+    color:var(--purple);
+    font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .metric-row{
+    display:flex; align-items:center;
+    gap:14px; margin-bottom:16px;
+  }
+  .icon-circle{
+    width:46px; height:46px; border-radius:50%;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .icon-circle.yellow{ background:var(--gold); }
+  .icon-circle.green{ background:var(--green-icon); }
+  .icon-circle.warn{ background:#f6b96e; }
+  .metric-text .m-label{
+    font-size:13.5px; font-weight:600;
+    color:var(--title-navy); margin-bottom:4px;
+  }
+  .metric-text .m-value{
+    font-size:23px; font-weight:800; color:var(--title-navy);
+  }
+  .metric-text .m-value.warn-val{ color:#c94040; }
+  .status-box{
+    display:flex; align-items:flex-start;
+    gap:10px; border-radius:12px;
+    padding:12px 14px; margin-bottom:16px;
+    font-size:13.5px; line-height:1.45;
+  }
+  .status-box.good{ background:var(--good-bg); color:#1c6b40; }
+  .status-box.warn{ background:var(--warn-bg); color:#8a5f14; }
+  .status-icon{ width:18px; height:18px; flex-shrink:0; margin-top:1px; }
+
+  .pagination{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:18px; padding:0 2px;
+  }
+  .pagination .count{ font-size:13px; color:var(--gray-label); }
+  .pagination .arrows{ display:flex; gap:18px; }
+  .pagination button{
+    background:none; border:none; padding:0; cursor:pointer;
+    color:var(--purple);
+    display:flex; align-items:center;
+  }
+  .pagination button:disabled{ opacity:0.3; cursor:default; }
+</style>
+</head>
+<body>
+
+  <div class="search-container">
+    <h1 class="search-title">Diagnóstico Financiero con IA</h1>
+    <p class="search-subtitle">Introduce el código de acceso que te hemos enviado para ver tu diagnóstico personalizado.</p>
+    <div class="search-box">
+      <svg class="search-ico" width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 10V7a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input type="text" class="search-input" id="clientIdInput" placeholder="Ej. ABC-123" maxlength="7" autocomplete="off">
+      <button class="search-btn" onclick="buscarCliente()">Ver</button>
+    </div>
+    <p class="search-error" id="searchError">Código no válido. Comprueba que lo has escrito correctamente.</p>
+  </div>
+
+  <div class="placeholder" id="placeholder">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+      <rect x="4" y="10" width="16" height="10" rx="2" stroke="#4d3fa8" stroke-width="1.5"/>
+      <path d="M8 10V7a4 4 0 018 0v3" stroke="#4d3fa8" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Introduce tu código de acceso para ver tu diagnóstico
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="screen">
+      <div class="statusbar"></div>
+      <div class="header">
+        <div class="side">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#23204a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Volver</span>
+        </div>
+        <div class="title">Salud financiera</div>
+        <div class="side right">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="#4d3fa8" stroke-width="2" stroke-linecap="round"/></svg>
+          <span style="color:var(--purple)">Menu</span>
+        </div>
+      </div>
+      <div class="content">
+        <div class="ai-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#4d3fa8"><path d="M12 2l1.8 5.6L19.4 9l-5.6 1.8L12 16.4l-1.8-5.6L4.6 9l5.6-1.4L12 2z"/></svg>
+          Generado por IA
+        </div>
+        <div class="diagnostico">
+          <h1 id="diagTitulo"></h1>
+          <p id="diagSubtitulo"></p>
+        </div>
+        <div class="exp-toggle-wrap">
+          <button class="explicabilidad-toggle" id="expToggle" onclick="toggleExp()">
+            Ver detalle
+            <svg viewBox="0 0 12 8" fill="none"><path d="M1 1.5l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="exp-help" id="expHelp" onclick="toggleExpHelp(event)">
+            ?
+            <span class="exp-tooltip">Esta sección de explicabilidad no estará disponible en la primera versión del Diagnóstico Financiero con IA.</span>
+          </button>
+        </div>
+        <div class="explicabilidad-panel" id="expPanel">
+          <div class="explicabilidad-inner" id="expInner"></div>
+        </div>
+        <div class="card">
+          <div id="cardBody"></div>
+          <div class="pagination">
+            <div class="count"><span id="pageNum">1</span> de 3</div>
+            <div class="arrows">
+              <button id="prevBtn" onclick="prevSlide()">
+                <svg width="9" height="15" viewBox="0 0 9 15" fill="none"><path d="M8 1L1.5 7.5L8 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button id="nextBtn" onclick="nextSlide()">
+                <svg width="9" height="15" viewBox="0 0 9 15" fill="none"><path d="M1 1L7.5 7.5L1 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const CLIENTES = {"UMS-335": {"titulo": "Tus cuentas piden un pequeño ajuste", "subtitulo": "Tus gastos habituales siguen por encima de tus ingresos, así que el balance es el punto principal a corregir. El colchón actual es muy sólido y te da margen, mientras la deuda no supone presión ahora mismo.", "explicabilidad": {"resumen_ejecutivo": "El principal reto de tu situación es el balance: tus gastos habituales superan a tus ingresos en unos 837 € al mes, de forma estructural. Además, la media reciente de gasto total sigue por encima de la de meses anteriores, aunque la tendencia general va bajando. La buena noticia es que tu colchón actual está muy por encima del objetivo y sigue creciendo, con 82.232 € y cobertura para 22,8 meses de gastos. En deuda estás tranquilo, porque no tienes cuota mensual pendiente.", "fortalezas": ["Tu colchón actual es muy holgado: 82.232 € y cubre 22,8 meses de tus gastos, muy por encima del objetivo de 6 meses.", "La tendencia de tu colchón es positiva: en los últimos meses ha subido de forma clara, pasando de una media de 65.249 € a 77.100 €.", "Tus gastos totales vienen bajando: la media de los últimos 3 meses es de 3.674 € frente a 4.020 € en los 3 anteriores."], "areas_de_mejora": ["Tus gastos habituales superan a tus ingresos en 837 € al mes, así que conviene cerrar ese hueco para no seguir apoyándote en el ahorro.", "El gasto en viajes ha crecido y en el último mes destacan 716 € en Hoteles, una partida prescindible que pesa mucho en tu presupuesto.", "También aparecen 312 € en Otros gastos en Compras y 128 € en Otros gastos en Ocio el último mes, dos palancas claras para recortar gasto discrecional."], "recomendacion_principal": "Activa el Coach Financiero \"Llegar a fin de mes\" para ajustar tu presupuesto mensual y reducir ese desfase de 837 € entre ingresos y gastos; así protegerás tu ahorro sin tocar tu colchón."}, "tarjetas": {"colchon": {"valor": "82.232 €", "meses": "22,8", "objetivo": null, "estado": "good"}, "balance": {"label": "Te falta cada mes", "valor": "-837 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>837 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "0,00 €", "frase": "No tienes cuota mensual de deuda. Estás tranquilo por este lado.", "estado": "good"}}}, "EQU-942": {"titulo": "Tu ahorro pide un empujón", "subtitulo": "Tu punto más delicado es el colchón: ahora mismo cubre 1,6 meses de gastos y sigue por debajo del objetivo. Además, el gasto viene subiendo y eso resta margen para reforzarlo.", "explicabilidad": {"resumen_ejecutivo": "Tu situación no está en una zona grave de deuda ni de balance, pero el foco claro está en el ahorro de seguridad. El colchón actual es de 235 € y cubre 1,6 meses de gastos, lejos de los 848 € objetivo, y además viene bajando en los últimos meses. Al mismo tiempo, los gastos totales han pasado de 222 € a 294 € de media entre los tres meses anteriores y los tres más recientes, lo que añade presión. En el último mes, la categoría de Compras ha mostrado un pequeño repunte, con 2 € en la subcategoría \"Otros gastos en Compras\".", "fortalezas": ["Tu balance estructural sigue siendo positivo, con 39 € al mes de margen habitual entre ingresos y gastos.", "No tienes cuota mensual de deuda activa en los datos analizados, así que no hay peso financiero por ese lado.", "El gasto prescindible es muy bajo: solo 2 € en \"Otros gastos en Compras\" en el último mes."], "areas_de_mejora": ["Tu colchón actual está en 235 € y solo cubre 1,6 meses de gastos, por debajo del objetivo de 848 €.", "El colchón viene bajando, con una media reciente de 144 € frente a 459 € en los meses anteriores.", "Los gastos totales están subiendo, con una media reciente de 294 € frente a 222 € en el tramo anterior."], "recomendacion_principal": "Empieza por destinar una cantidad fija cada mes a reforzar tu colchón hasta acercarte a 848 €, y apóyate en el Coach Financiero \"Aumentar colchón\" para mantener el hábito y recuperar seguridad sin tocar tu día a día."}, "tarjetas": {"colchon": {"valor": "235 €", "meses": "1,6", "objetivo": "848 €", "estado": "warn"}, "balance": {"label": "Te suele sobrar al mes", "valor": "positivo", "frase": "Ingresas más de lo que gastas cada mes.", "estado": "good"}, "deuda": {"valor": "0,00 €", "frase": "No tienes cuota mensual de deuda. Estás tranquilo por este lado.", "estado": "good"}}}, "ZXY-567": {"titulo": "Tus cuentas piden un pequeño ajuste", "subtitulo": "El principal reto es que tus gastos habituales siguen por encima de lo que ingresas cada mes. Aun así, tu colchón actual está muy sólido y sigue creciendo, así que tienes margen para corregir el desajuste con calma.", "explicabilidad": {"resumen_ejecutivo": "Tus cuentas presentan un balance estructural negativo de 780 € al mes: la referencia habitual de ingresos es de 6.013 € y la de gastos, de 6.793 €, así que gastas por encima de lo que entra. Además, el gasto total viene subiendo: en los últimos 3 meses ha sido de 9.148 € de media frente a 9.037 € en los 3 anteriores. El colchón actual es muy holgado, con 1.898.049 € y una cobertura de 279,4 meses, por encima del objetivo de 27.499 €.", "fortalezas": ["Tu colchón actual cubre 279,4 meses de tus gastos, muy por encima del objetivo y además va subiendo.", "Tus ingresos recurrentes habituales se sitúan en 6.013 € al mes y vienen al alza en los últimos meses."], "areas_de_mejora": ["Tus gastos habituales superan a tus ingresos en 780 € al mes, así que el equilibrio mensual necesita ajuste.", "El gasto total está creciendo: la media de los últimos 3 meses, 9.148 €, es superior a la de los 3 meses previos, 9.037 €.", "En viajes has tenido un repunte claro en el último mes, con Hoteles por 1.615 € y Avión por 1.112 €."], "recomendacion_principal": "Para recuperar equilibrio, revisa el gasto recurrente en viajes y fija un tope mensual con Presupuestos en Ocio y Viajes, empezando por controlar esos 2.727 € de Viajes del último mes."}, "tarjetas": {"colchon": {"valor": "sin datos", "meses": "279,4", "objetivo": "27.499 €", "estado": "good"}, "balance": {"label": "Te falta cada mes", "valor": "-780 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>780 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "JYT-432": {"titulo": "Toca reequilibrar lo que entra y lo que sale", "subtitulo": "El principal reto está en el balance: tus gastos habituales superan a tus ingresos y conviene corregir esa brecha. Además, el gasto total viene creciendo y eso añade presión al margen mensual. Tu colchón actual está bien cubierto, pero no compensa un desequilibrio recurrente.", "explicabilidad": {"resumen_ejecutivo": "El balance es el punto más importante ahora mismo: tus gastos habituales se sitúan en 19.611 € frente a unos ingresos habituales de 11.482 €, dejando un desequilibrio de 8.129 € al mes. La tendencia reciente tampoco ayuda, porque el gasto total ha pasado de una media de 16.134 € a 19.563 € en los últimos meses, mientras los ingresos suben con más suavidad. La buena noticia es que tu colchón actual está en 178.130 € y cubre 9,1 meses de gastos, por encima del objetivo, y además viene mejorando. En el último mes destacan 4.504 € en Administraciones Públicas y 1.411 € en Bares y restaurantes, dos partidas que han pesado en el cierre reciente.", "fortalezas": ["Tu colchón actual es sólido: 178.130 € y cubre 9,1 meses de gastos, por encima del objetivo de seguridad.", "Los ingresos habituales muestran una mejora suave, con una media reciente de 10.673 € frente a 10.389 € en los meses anteriores.", "No tienes cuota de deuda mensual activa, así que no hay presión por ese lado."], "areas_de_mejora": ["Tus gastos habituales superan a tus ingresos en 8.129 € al mes, así que el balance sigue en negativo.", "El gasto total viene subiendo: la media reciente ronda 19.563 €, por encima de los 16.134 € de los meses previos.", "En el último mes destacan 4.504 € en Administraciones Públicas y 1.411 € en Bares y restaurantes, dos partidas prescindibles a vigilar."], "recomendacion_principal": "Concentra el próximo mes en recortar al menos 1.400 € de Bares y restaurantes y revisa el resto de gasto discrecional para acercarte a un balance más equilibrado; si quieres apoyo, el Coach Financiero \"Llegar a fin de mes\" te puede ayudar a ordenar ingresos y gastos paso a paso."}, "tarjetas": {"colchon": {"valor": "178.130 €", "meses": "9,1", "objetivo": null, "estado": "good"}, "balance": {"label": "Te falta cada mes", "valor": "-8.129 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>8.129 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "0,00 €", "frase": "No tienes cuota mensual de deuda. Estás tranquilo por este lado.", "estado": "good"}}}, "CRA-223": {"titulo": "Hay luces y algún punto que pulir", "subtitulo": "Tu situación mezcla señales buenas con margen de mejora. El colchón actual cubre 1,4 meses de tus gastos y sigue por debajo del objetivo, aunque la deuda no te está presionando ahora mismo. Además, tu gasto reciente va a la baja.", "explicabilidad": {"resumen_ejecutivo": "Tu foto financiera es mixta: el punto más claro a vigilar es que tu colchón actual cubre 1,4 meses de tus gastos, muy por debajo del objetivo de 6 meses, aunque la tendencia se mantiene estable. En paralelo, no tienes deuda activa y eso te da aire para ordenar la situación. Como referencia de gasto, en el último mes destaca un desembolso de 6 € en Estancos, dentro de un gasto discrecional total muy contenido. También se aprecia que los gastos totales vienen bajando frente a los meses anteriores, lo que es una señal constructiva.", "fortalezas": ["No tienes cuota de deuda mensual, así que no destinas ingresos a préstamos ni tarjetas ahora mismo.", "Tus gastos totales vienen bajando: en los 3 meses más recientes se sitúan en 34 € de media, frente a 262 € en los 3 meses anteriores.", "El gasto discrecional del último mes ha sido muy contenido, con solo 6 € en Estancos."], "areas_de_mejora": ["Tu colchón actual solo cubre 1,4 meses de tus gastos, lejos de los 6 meses recomendados; te faltan 4,6 meses de protección.", "El colchón objetivo está cubierto en importe, pero la equivalencia en meses sigue siendo baja, así que conviene seguir reforzando el ahorro líquido con constancia.", "En el último mes has tenido 6 € de gasto prescindible en Estancos; aunque es pequeño, es una palanca sencilla para redirigir ese dinero al ahorro."], "recomendacion_principal": "Abre una Cuenta Metas para ir apartando cada mes esos 6 € de gasto prescindible de Estancos y convertirlos en ahorro, sin tocar tu colchón actual."}, "tarjetas": {"colchon": {"valor": "sin datos", "meses": "1,4", "objetivo": null, "estado": "warn"}, "balance": {"label": "Balance mensual", "valor": "estable", "frase": "Tu balance mensual se mantiene estable.", "estado": "good"}, "deuda": {"valor": "0,00 €", "frase": "No tienes cuota mensual de deuda. Estás tranquilo por este lado.", "estado": "good"}}}, "FFP-656": {"titulo": "Vamos a cuadrar tu balance", "subtitulo": "Tus gastos habituales siguen por encima de lo que ingresas, así que el principal reto es equilibrar la salida de dinero. Además, tu colchón actual aún cubre solo 2,7 meses de gastos y va perdiendo algo de fuerza.", "explicabilidad": {"resumen_ejecutivo": "El balance es el punto principal a corregir: tus ingresos habituales rondan los 3.083 € y tus gastos habituales los 4.018 €, dejando un hueco de 935 € al mes. La buena noticia es que el gasto total viene bajando; en los últimos 3 meses ha sido de 4.471 € de media, frente a 6.066 € en los 3 anteriores. En paralelo, tu colchón actual es de 10.818 €, pero solo cubre 2,7 meses de gasto y está por debajo del objetivo de 6 meses. La cuota de deuda está controlada y se mantiene estable en 177 € al mes.", "fortalezas": ["Tu deuda mensual está muy contenida: 177 € al mes, con un esfuerzo claramente controlado frente a tus ingresos.", "El gasto total viene reduciéndose con fuerza: la media de los últimos 3 meses ha bajado a 4.471 € desde 6.066 € en los 3 anteriores.", "En ocio también hay una mejora clara, con Bares y restaurantes en 33 € el último mes y una tendencia descendente en los últimos meses."], "areas_de_mejora": ["Tus gastos habituales siguen superando a tus ingresos habituales: 4.018 € frente a 3.083 €, con un desequilibrio de 935 € al mes.", "Tu colchón actual sigue por debajo del objetivo: 10.818 €, equivalentes a 2,7 meses de gastos, cuando lo recomendable es llegar a 6 meses.", "La partida de Viajes ha sido muy elevada en el último mes, con 683 € en Hoteles, que además figura entre tus principales gastos prescindibles."], "recomendacion_principal": "Pon en marcha el Coach Financiero \"Llegar a fin de mes\" para atacar el desfase mensual de 935 € y ayudarte a equilibrar ingresos y gastos sin tocar tu colchón."}, "tarjetas": {"colchon": {"valor": "10.818 €", "meses": "2,7", "objetivo": null, "estado": "warn"}, "balance": {"label": "Te falta cada mes", "valor": "-935 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>935 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "RVG-576": {"titulo": "Tu fortaleza financiera merece dar el siguiente paso", "subtitulo": "En conjunto, tu situación es sólida: el colchón actual cubre de sobra el objetivo y además sigue creciendo. Tus cuentas mantienen un margen positivo y la deuda está muy contenida, así que ahora puedes pensar en sacar partido a ese exceso con calma.", "explicabilidad": {"resumen_ejecutivo": "Tu colchón actual es muy holgado: cubre 26,1 meses de tus gastos y supera con mucha distancia el colchón objetivo de 32.383 €, además la tendencia va al alza. El balance estructural también es positivo, con 438 € al mes, y el esfuerzo de deuda es muy bajo, de forma que la deuda no te está presionando. Como contexto a vigilar, tus ingresos vienen bajando y en el último mes los gastos totales alcanzaron 9.628 €, su nivel más alto de la serie, con especial peso de Compras, Ocio y Viajes en el tramo reciente.", "fortalezas": ["Tu colchón actual asciende a 185.981 € y cubre 26,1 meses de gastos, muy por encima del objetivo de 32.383 €.", "El balance estructural sigue en positivo, con un margen habitual de 438 € al mes.", "La deuda está muy controlada: dedicas solo 28 € al mes, con un esfuerzo claramente bajo sobre tus ingresos recurrentes."], "areas_de_mejora": ["Tus ingresos recurrentes vienen bajando: la media de los últimos 3 meses es de 5.833 € frente a 5.998 € en los 3 anteriores.", "El gasto total del último mes fue de 9.628 €, el máximo de la serie, por encima de tu gasto habitual de 7.138 €.", "En el último mes destacan como gastos prescindibles 337 € en Otros gastos en Compras, 306 € en Bares y restaurantes y 152 € en Servicios digitales."], "recomendacion_principal": "Como ya tienes el colchón cubierto y dispones de un excedente de 153.598 €, puedes empezar a invertir una parte si te apetece, sin tocar tu red de seguridad y avanzando poco a poco."}, "tarjetas": {"colchon": {"valor": "32.383 €", "meses": "26,1", "objetivo": "32.383 €", "estado": "good"}, "balance": {"label": "Te suele sobrar al mes", "valor": "positivo", "frase": "Ingresas más de lo que gastas cada mes.", "estado": "good"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "RRL-249": {"titulo": "Tu ahorro va de lujo, ¡aprovéchalo!", "subtitulo": "Tu situación destaca por una base de ahorro sólida y una deuda manejable. Además, tus cuentas habituales siguen en positivo, así que tienes margen para pensar en el siguiente paso con calma.", "explicabilidad": {"resumen_ejecutivo": "Tu colchón actual está muy por encima del objetivo: cubre 10,7 meses de gastos y supera con holgura el nivel de seguridad recomendado. Aun así, conviene vigilar que viene bajando en los últimos meses, desde una media de 49.063 € a 41.362 €. La deuda está controlada, con un esfuerzo equivalente a algo menos de tres quintas partes de tus ingresos, y el balance estructural sigue en positivo, en torno a 800 € al mes. En gasto, el mes más reciente muestra un repunte en ocio, sobre todo en Bares y restaurantes con 626 €, y también un desembolso de 485 € en Avión.", "fortalezas": ["Tu colchón actual es de 41.308 € y cubre 10,7 meses de tus gastos, así que estás bien protegido.", "Tu balance estructural es positivo, con unos 800 € al mes de margen habitual entre lo que ingresas y lo que gastas.", "La deuda está bajo control: dedicas 1.182 € al mes, una parte contenida de tus ingresos recurrentes."], "areas_de_mejora": ["El colchón actual viene bajando y ha pasado de una media de 49.063 € a 41.362 € en los últimos meses, así que conviene frenar esa erosión.", "En el último mes has concentrado 626 € en Bares y restaurantes y 485 € en Avión, dos partidas prescindibles que elevan el gasto discrecional.", "El gasto en Ocio sigue siendo relevante y ha terminado el último mes en 629 €, por encima de meses anteriores."], "recomendacion_principal": "Si te apetece dar un paso más, puedes empezar a invertir parte de los 28.511 € que tienes por encima de tu colchón de seguridad, siempre sin tocar ese colchón."}, "tarjetas": {"colchon": {"valor": "41.308 €", "meses": "10,7", "objetivo": null, "estado": "good"}, "balance": {"label": "Te suele sobrar al mes", "valor": "positivo", "frase": "Ingresas más de lo que gastas cada mes.", "estado": "good"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "XPE-476": {"titulo": "Hay varios puntos a ajustar", "subtitulo": "Tu situación es mixta: el colchón actual es muy amplio y cubre 19,4 meses de gastos, pero la tendencia va a la baja. Al mismo tiempo, tus gastos habituales superan a tus ingresos y el gasto reciente ha repuntado con fuerza.", "explicabilidad": {"resumen_ejecutivo": "Tu colchón actual es muy sólido: 67.520 € y cubre 19,4 meses de gastos, muy por encima del objetivo de 6 meses. Aun así, la tendencia del ahorro líquido va a la baja, con una media de 70.524 € en los últimos 3 meses frente a 76.773 € en los 3 anteriores. El principal foco de atención está en el gasto: tus gastos habituales superan a tus ingresos en 180 € al mes y el gasto total reciente ha subido con intensidad, pasando de una media de 4.363 € a 5.147 € entre los dos bloques de 3 meses. En el último mes, además, destacan subidas muy claras en Compras, Ocio y Viajes.", "fortalezas": ["Tu colchón actual es de 67.520 € y cubre 19,4 meses de tus gastos, así que estás muy por encima del objetivo de seguridad.", "No tienes cuota de deuda mensual pendiente, lo que te deja margen para centrarte en ordenar el gasto.", "Tus ingresos recurrentes se mantienen estables en torno a 4.297 € al mes."], "areas_de_mejora": ["Tus gastos habituales superan a tus ingresos en 180 € al mes, así que el equilibrio mensual sigue siendo negativo.", "El gasto total viene subiendo: la media de los últimos 3 meses ha sido de 5.147 €, frente a 4.363 € en los 3 anteriores.", "En el último mes se han disparado varios gastos prescindibles: Otros gastos en Compras 2.145 €, Bares y restaurantes 1.170 €, Hoteles 931 € y Estética y bienestar 245 €."], "recomendacion_principal": "Activa Presupuestos para Compras y Ocio y pon un límite mensual, empezando por recortar los 2.145 € de Otros gastos en Compras y los 1.170 € de Bares y restaurantes."}, "tarjetas": {"colchon": {"valor": "67.520 €", "meses": "19,4", "objetivo": null, "estado": "good"}, "balance": {"label": "Te falta cada mes", "valor": "-180 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>180 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "0,00 €", "frase": "No tienes cuota mensual de deuda. Estás tranquilo por este lado.", "estado": "good"}}}, "RGM-778": {"titulo": "Vamos a reequilibrar tus cuentas", "subtitulo": "Tus gastos habituales siguen por encima de lo que ingresas, así que el principal reto está en corregir ese desequilibrio. Aun así, tu colchón actual es sólido y cubre 10,3 meses de gastos, lo que te da margen para actuar con calma.", "explicabilidad": {"resumen_ejecutivo": "El balance es el punto que más pesa en tu situación: tus gastos habituales superan a tus ingresos en 6.090 € al mes, así que el desequilibrio no es puntual. La buena noticia es que los gastos totales vienen bajando; en los 3 últimos meses han rondado 16.767 € frente a 20.270 € en los 3 anteriores. Tu colchón actual está fuerte y alcanza 10,3 meses de gastos, por encima del objetivo, y además va subiendo. En deuda, el esfuerzo mensual es contenido y no marca hoy el problema principal.", "fortalezas": ["Tu colchón actual es muy sólido: 153.960 € y te cubre 10,3 meses de gastos, por encima del objetivo.", "Los gastos totales vienen bajando: la media de los 3 últimos meses se sitúa en 16.767 €, frente a 20.270 € en los 3 anteriores.", "El esfuerzo mensual de deuda está controlado: la cuota reciente ha sido de 773 € y no supone una carga excesiva sobre tus ingresos."], "areas_de_mejora": ["Tus gastos habituales superan a tus ingresos en 6.090 € al mes, así que el balance estructural sigue en negativo.", "El gasto en Transporte ha tenido un salto muy fuerte en el último mes, con 1.359 € frente a importes mucho menores en meses previos.", "En Ocio sigues teniendo varias palancas claras de ajuste: Bares y restaurantes suman 918 € este último mes y Hoteles 592 €."], "recomendacion_principal": "Activa Presupuestos para Ocio y Transporte y fija un límite mensual; así podrás contener los 918 € en Bares y restaurantes y el repunte de 1.359 € en Transporte sin tocar tu colchón."}, "tarjetas": {"colchon": {"valor": "153.960 €", "meses": "10,3", "objetivo": null, "estado": "good"}, "balance": {"label": "Te falta cada mes", "valor": "-6.090 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>6.090 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "EDX-974": {"titulo": "Vamos a reequilibrar tus cuentas", "subtitulo": "Tu principal reto es el desajuste entre lo que ingresas y lo que gastas: cada mes sales por detrás y eso va restando margen. Además, tu colchón sigue por debajo del objetivo y viene bajando, así que conviene frenarlo cuanto antes.", "explicabilidad": {"resumen_ejecutivo": "El balance es el punto más delicado: tus gastos habituales superan a tus ingresos en 4.701 € al mes, y además la tendencia reciente de gastos va al alza. En los últimos 3 meses, el gasto medio ha sido 17.383 € frente a 9.146 € en los 3 anteriores, con un salto muy claro en la serie de gastos totales. Tu colchón actual cubre 1,6 meses de gastos, lejos del objetivo de 6 meses, y además viene bajando en los últimos meses. La deuda, eso sí, está controlada: dedicas una parte manejable de tus ingresos a pagarla.", "fortalezas": ["La cuota de deuda es controlada: 712 € al mes, muy lejos de una situación de tensión por deuda.", "Tus ingresos recurrentes vienen mejorando, con 7.412 € de media en los 3 meses recientes frente a 5.948 € en los 3 anteriores.", "Tu colchón actual sigue siendo un respaldo de 13.663 €, aunque todavía insuficiente para el objetivo."], "areas_de_mejora": ["Tus gastos habituales están por encima de tus ingresos en 4.701 € al mes, así que ahora mismo el equilibrio mensual es el gran punto a corregir.", "Tu colchón actual cubre solo 1,6 meses de gastos, bastante por debajo del objetivo de 6 meses, y además va bajando.", "En el último mes destacan gastos prescindibles en Bares y restaurantes por 486 €, Electrónica y electrodomésticos por 287 € y Otros gastos en salud y belleza por 164 €."], "recomendacion_principal": "Activa el Coach Financiero \"Llegar a fin de mes\" para ordenar el desfase mensual y, en paralelo, recorta primero los 486 € de Bares y restaurantes del último mes para ir recuperando margen sin tocar tu colchón."}, "tarjetas": {"colchon": {"valor": "13.663 €", "meses": "1,6", "objetivo": null, "estado": "warn"}, "balance": {"label": "Te falta cada mes", "valor": "-4.701 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>4.701 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "BKF-499": {"titulo": "Toca reequilibrar lo que entra y lo que sale", "subtitulo": "Tus gastos habituales están claramente por encima de lo que sueles ingresar, así que el desajuste mensual es el punto principal a corregir. Además, tus ingresos vienen perdiendo fuerza y el gasto total reciente ha repuntado con mucha intensidad.", "explicabilidad": {"resumen_ejecutivo": "El balance es el principal foco de atención: tus gastos habituales superan a tus ingresos en 12.398 € al mes, así que la foto estructural es negativa. En la serie de gastos totales aparece un mes claramente atípico en diciembre de 2025, con 415.043 €, muy por encima del resto. En el último mes, el gasto discrecional también pesa, con 836 € en Bares y restaurantes, 800 € en Otros gastos en Compras y 759 € en Mobiliario y decoración. La buena noticia es que tu colchón actual suma 76.325 € y cubre 4,4 meses de gastos, y además va mejorando.", "fortalezas": ["Tienes 76.325 € de colchón actual, que cubren 4,4 meses de tus gastos y además muestran una evolución al alza.", "Tu deuda mensual está controlada: dedicas 445 € al mes y el esfuerzo sobre tus ingresos recurrentes es bajo.", "Tus gastos en Transporte han bajado con claridad en los últimos meses, pasando de 1.829 € de media a 289 € de media en la parte reciente."], "areas_de_mejora": ["Tus gastos habituales superan a tus ingresos en 12.398 € al mes, así que el equilibrio de tus cuentas sigue siendo negativo.", "En diciembre de 2025 tus gastos totales alcanzaron 415.043 €, un pico muy por encima del comportamiento normal de la serie.", "En el último mes destacan 836 € en Bares y restaurantes, 800 € en Otros gastos en Compras y 759 € en Mobiliario y decoración, tres partidas prescindibles sobre las que podrías actuar."], "recomendacion_principal": "Empieza por poner un límite mensual a tus gastos discrecionales con Presupuestos, centrándote en Bares y restaurantes, Compras y Ocio, para frenar el desajuste de tus cuentas sin tocar tu colchón."}, "tarjetas": {"colchon": {"valor": "76.325 €", "meses": "4,4", "objetivo": null, "estado": "good"}, "balance": {"label": "Te falta cada mes", "valor": "-12.398 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>12.398 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "JJH-543": {"titulo": "Aquí va tu foto financiera del mes", "subtitulo": "Tus finanzas están en una posición sólida y con margen, aunque el gasto viene ganando peso en los últimos meses. El colchón actual supera con claridad el objetivo y, además, tu balance habitual sigue siendo positivo.", "explicabilidad": {"resumen_ejecutivo": "La foto global es buena: tu balance estructural es positivo en 1.563 € al mes y el colchón actual cubre 12,2 meses de gastos, por encima del objetivo de seguridad. Como además no tienes deuda pendiente, la base es claramente favorable. El punto a vigilar es la tendencia: tus gastos totales vienen subiendo, con meses muy desiguales; en octubre de 2025 alcanzaron 12.348 € y en noviembre de 2025 bajaron a 2.408 €, antes de volver a 5.150 € en diciembre. Si mantienes ese control, tendrás margen para aprovechar mejor tu capacidad de ahorro.", "fortalezas": ["Tu balance habitual es positivo en 1.563 € al mes, así que tus ingresos recurrentes siguen por encima de tus gastos habituales.", "Tu colchón actual cubre 12,2 meses de tus gastos, muy por encima del objetivo de 6 meses.", "No tienes deuda pendiente, lo que te deja más libertad para organizar tu dinero."], "areas_de_mejora": ["Tus gastos totales vienen subiendo y han sido muy irregulares: en octubre de 2025 llegaron a 12.348 €, frente a 2.408 € en noviembre y 5.150 € en diciembre.", "Dentro del gasto prescindible, destacan Taxis y movilidad urbana con 172 € el último mes, Otros gastos en Compras con 160 € y Bares y restaurantes con 120 €.", "Tu colchón actual está bajando en los últimos meses: la media reciente es de 33.458 € frente a 41.083 € en los tres meses anteriores."], "recomendacion_principal": "Como ya superas tu colchón objetivo y sigues teniendo 22.664 € por encima de esa reserva, puedes plantearte empezar a invertir una parte de ese excedente si te apetece, sin tocar tu colchón de seguridad."}, "tarjetas": {"colchon": {"valor": "sin datos", "meses": "12,2", "objetivo": null, "estado": "good"}, "balance": {"label": "Te suele sobrar al mes", "valor": "positivo", "frase": "Ingresas más de lo que gastas cada mes.", "estado": "good"}, "deuda": {"valor": "0,00 €", "frase": "No tienes cuota mensual de deuda. Estás tranquilo por este lado.", "estado": "good"}}}, "FVD-472": {"titulo": "Hay que poner orden en la tendencia", "subtitulo": "Tus cuentas siguen siendo sólidas y el colchón está muy por encima del objetivo. Aun así, el gasto viene ganando fuerza y conviene frenarlo antes de que recorte tu margen mes a mes.", "explicabilidad": {"resumen_ejecutivo": "Tu situación general sigue siendo buena: el balance estructural es positivo en 640 € al mes, la deuda está controlada y tu colchón actual cubre 14,9 meses de gastos. El punto que más atención pide es la tendencia, porque el gasto total de los últimos 3 meses ha subido con fuerza frente a los 3 anteriores. En el último mes destacan 158 € en Espectáculos y 23 € en Bares y restaurantes dentro del gasto prescindible. Además, tu colchón actual ha bajado en los últimos meses, aunque sigue muy por encima del objetivo.", "fortalezas": ["Tu balance estructural sigue en positivo, con un margen habitual de 640 € al mes.", "Tu colchón actual asciende a 31.010 € y cubre 14,9 meses de tus gastos, así que estás bien protegido.", "La deuda mensual se mantiene estable en 515 €, con un esfuerzo controlado sobre tus ingresos."], "areas_de_mejora": ["El gasto total viene subiendo: la media de los 3 últimos meses, 2.166 €, supera claramente la de los 3 anteriores, 1.501 €.", "El colchón actual ha bajado en los últimos meses: la media reciente está en 29.425 €, por debajo de los 36.655 € del tramo anterior.", "Dentro del gasto prescindible, Espectáculos ha sido la partida más alta del último mes, con 158 €, y Bares y restaurantes ha sumado 23 €."], "recomendacion_principal": "Activa Presupuestos para Ocio y Compras y fija un tope mensual que te ayude a contener ese gasto creciente; así protegerás tu margen sin tocar tu colchón actual."}, "tarjetas": {"colchon": {"valor": "31.010 €", "meses": "14,9", "objetivo": null, "estado": "good"}, "balance": {"label": "Te suele sobrar al mes", "valor": "positivo", "frase": "Ingresas más de lo que gastas cada mes.", "estado": "good"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "XUF-943": {"titulo": "Toca reequilibrar tus cuentas", "subtitulo": "Tus gastos habituales están por encima de lo que ingresa tu dinero cada mes, y ese desajuste es ahora lo más importante. Además, el gasto viene subiendo mientras tu colchón sigue holgado y bien cubierto.", "explicabilidad": {"resumen_ejecutivo": "El principal reto de tu situación es el balance: tus gastos habituales superan a tus ingresos en 2.789 € al mes, así que cada mes estás tirando de ahorro para mantener el ritmo. La tendencia reciente no ayuda, porque los gastos totales han subido frente a los meses anteriores, con un último mes muy cargado por Compras y Hogar. En concreto, en Compras destaca Mobiliario y decoración con 3.943 € el último mes, y en Hogar aparecen 745 € en Reformas y mantenimiento. La parte positiva es que tu colchón actual es muy sólido y sigue creciendo: cubre 24,3 meses de gastos y supera ampliamente el objetivo de seguridad.", "fortalezas": ["Tu colchón actual cubre 24,3 meses de gastos, muy por encima del objetivo de seguridad.", "Tu ahorro líquido sigue mejorando y se mantiene en 183.023 €.", "Tus ingresos recurrentes se mantienen estables en torno a 4.739 € al mes."], "areas_de_mejora": ["Tus gastos habituales superan a tus ingresos en 2.789 € al mes, así que el balance es negativo.", "El gasto total viene subiendo: los últimos 3 meses se han situado en torno a 8.490 € frente a 8.196 € en los 3 anteriores.", "En el último mes ha habido un tirón fuerte en Compras, con Mobiliario y decoración por 3.943 €, además de 745 € en Reformas y mantenimiento."], "recomendacion_principal": "Reduce cuanto antes el gasto puntual de Mobiliario y decoración por 3.943 € y apóyate en el Coach Financiero \"Llegar a fin de mes\" para encajar mejor tus ingresos y gastos mes a mes."}, "tarjetas": {"colchon": {"valor": "sin datos", "meses": "24,3", "objetivo": null, "estado": "good"}, "balance": {"label": "Te falta cada mes", "valor": "-2.789 €", "frase": "Tus gastos habituales superan a tus ingresos en unos <b>2.789 €</b> al mes.", "estado": "warn"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}, "CKV-998": {"titulo": "Un par de cosas merecen tu atención", "subtitulo": "Tus gastos vienen creciendo y eso está recortando tu margen mes a mes. Además, tu colchón actual cubre 3,9 meses de gastos, así que aún queda camino para llegar a una protección más cómoda.", "explicabilidad": {"resumen_ejecutivo": "La foto general es mixta: tus ingresos se mantienen estables en torno a 1.988 € al mes, pero los gastos habituales han subido y eso ha estrechado tu margen. El colchón actual cubre 3,9 meses de gastos, por debajo del objetivo de 6 meses, aunque viene mejorando en los últimos meses. No hay tensión relevante por deuda: el esfuerzo en deuda es nulo y solo aparece una cuota puntual de 68 € en mayo de 2025 y 37 € en junio de 2025. En gasto discrecional, destacan Ocio con 260 € en el último mes y Salud y Belleza con 195 €, dos partidas que conviene vigilar.", "fortalezas": ["Tus ingresos se han mantenido estables, con una media reciente de 1.988 € al mes, muy parecida a los 1.975 € de los meses anteriores.", "No estás destinando una parte relevante de tus ingresos a deuda: el esfuerzo mensual es controlado y actualmente es de 0 €.", "Tu colchón actual ha mejorado y ya cubre 3,9 meses de gastos, cuando hace unos meses estaba más cerca de 2,8 meses."], "areas_de_mejora": ["Tus gastos totales están subiendo: la media de los 3 últimos meses, 1.664 €, supera con claridad la de los 3 meses anteriores, 1.303 €.", "Tu colchón actual sigue por debajo del objetivo: te faltan 319 € para alcanzar los 5.885 € recomendados y tener 6 meses de protección.", "En el último mes destacan varios gastos prescindibles: Bares y restaurantes con 193 €, Hoteles con 143 € y Deportes con 67 €."], "recomendacion_principal": "Activa Presupuestos para poner un límite mensual a Ocio y Compras, y empieza por vigilar los 193 € en Bares y restaurantes del último mes; te ayudará a frenar el aumento del gasto sin tocar tu colchón."}, "tarjetas": {"colchon": {"valor": "319 €", "meses": "3,9", "objetivo": null, "estado": "warn"}, "balance": {"label": "Balance mensual", "valor": "estable", "frase": "Tu balance mensual se mantiene estable.", "estado": "good"}, "deuda": {"valor": "sin datos", "frase": "No hay datos de deuda mensual disponibles.", "estado": "good"}}}};
+
+  const ICON_CHECK = `<svg class="status-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="none" stroke="#1f9c56" stroke-width="1.6"/><path d="M7.5 12.3l2.8 2.8L16.8 9" stroke="#1f9c56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const ICON_WARN = `<svg class="status-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="none" stroke="#dc9a1f" stroke-width="1.6"/><path d="M12 7.5v6" stroke="#dc9a1f" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1" fill="#dc9a1f"/></svg>`;
+  const ICON_PIGGY = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3c-4.5 0-8 3-8 6.5 0 1.8.8 3.3 2.1 4.4V17l2-1h1.4c.8.3 1.7.5 2.5.5s1.7-.2 2.5-.5H16l2 1v-2.6c1.5-1.3 2.5-3 2.5-4.9C20.5 6 17 3 12 3z" stroke="#1a1442" stroke-width="1.5" fill="none"/><circle cx="15.5" cy="8.5" r="1" fill="#1a1442"/></svg>`;
+  const ICON_GAUGE = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 15a8 8 0 1116 0" stroke="#1a1442" stroke-width="1.7" fill="none"/><path d="M12 15l4-4.5" stroke="#1a1442" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="15" r="1.2" fill="#1a1442"/></svg>`;
+  const ICON_PIE = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6.3" stroke="#1a1442" stroke-width="1.5" fill="none"/><path d="M10 6.8V10l2.3 1.6" stroke="#1a1442" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16.3" cy="16.3" r="4" fill="#1a1442"/><text x="16.3" y="17.9" font-size="4.6" text-anchor="middle" fill="#3ec17a" font-family="sans-serif" font-weight="700">€</text></svg>`;
+
+  let currentClient = null;
+  let idx = 0;
+
+  function buscarCliente(){
+    let raw = document.getElementById('clientIdInput').value.trim().toUpperCase();
+    // Aceptar sin guion: ABC123 → ABC-123
+    if(/^[A-Z]{3}\d{3}$/.test(raw)) raw = raw.slice(0,3) + '-' + raw.slice(3);
+
+    const errorEl = document.getElementById('searchError');
+    const placeholder = document.getElementById('placeholder');
+    const phone = document.getElementById('phone');
+
+    if(!raw || !CLIENTES[raw]){
+      errorEl.classList.add('visible');
+      placeholder.style.display = 'block';
+      phone.classList.remove('visible');
+      return;
+    }
+
+    errorEl.classList.remove('visible');
+    placeholder.style.display = 'none';
+    phone.classList.add('visible');
+
+    currentClient = CLIENTES[raw];
+    document.getElementById('diagTitulo').textContent = currentClient.titulo;
+    document.getElementById('diagSubtitulo').textContent = currentClient.subtitulo;
+
+    // Explicabilidad
+    const expl = currentClient.explicabilidad;
+    const fortalezasHtml = (expl.fortalezas || []).map(f => `<li>${escapeHtml(f)}</li>`).join('');
+    const areasHtml = (expl.areas_de_mejora || []).map(a => `<li>${escapeHtml(a)}</li>`).join('');
+    document.getElementById('expInner').innerHTML = `
+      <div class="exp-section">
+        <div class="exp-title">Resumen</div>
+        <p class="exp-text">${escapeHtml(expl.resumen_ejecutivo || '')}</p>
+      </div>
+      ${fortalezasHtml ? `<div class="exp-section"><div class="exp-title">Fortalezas</div><ul class="exp-list">${fortalezasHtml}</ul></div>` : ''}
+      ${areasHtml ? `<div class="exp-section"><div class="exp-title">Áreas de mejora</div><ul class="exp-list">${areasHtml}</ul></div>` : ''}
+      ${expl.recomendacion_principal ? `<div class="exp-section"><div class="exp-title">Recomendación</div><div class="exp-reco">${escapeHtml(expl.recomendacion_principal)}</div></div>` : ''}
+    `;
+
+    idx = 0;
+    renderCard();
+    setTimeout(() => phone.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+  }
+
+  function buildSlides(c){
+    const col = c.tarjetas.colchon;
+    const bal = c.tarjetas.balance;
+    const deu = c.tarjetas.deuda;
+
+    // ── Slide 1: Colchón ────────────────────────────────
+    let colchonLabel, colchonValue, colchonStatusText, colchonIconColor;
+    if(col.meses){
+      colchonLabel = `Tienes ${col.meses} meses de colchón`;
+    } else {
+      colchonLabel = 'Tu colchón financiero';
+    }
+    colchonValue = col.valor;
+    if(col.estado === 'good'){
+      colchonStatusText = col.objetivo
+        ? `El ideal son 6 meses. Genial, tu colchón está por encima del objetivo (${col.objetivo}).`
+        : `El ideal son 6 meses. Tu colchón está por encima del objetivo.`;
+      colchonIconColor = 'green';
+    } else {
+      colchonStatusText = col.objetivo
+        ? `El ideal son 6 meses (${col.objetivo}). Tu colchón está por debajo y conviene reforzarlo.`
+        : `El ideal son 6 meses. Tu colchón está por debajo y conviene reforzarlo.`;
+      colchonIconColor = 'warn';
+    }
+
+    // ── Slide 2: Balance ────────────────────────────────
+    const balanceIconColor = bal.estado === 'good' ? 'green' : 'warn';
+
+    // ── Slide 3: Deuda ──────────────────────────────────
+    const deudaIconColor = deu.estado === 'good' ? 'green' : 'warn';
+
+    return [
+      {
+        titulo: 'Colchón financiero',
+        iconoColor: colchonIconColor,
+        icono: ICON_PIGGY,
+        metricaLabel: colchonLabel,
+        metricaValor: colchonValue,
+        estado: col.estado,
+        estadoIcono: col.estado === 'good' ? ICON_CHECK : ICON_WARN,
+        estadoHtml: colchonStatusText,
+      },
+      {
+        titulo: 'Balance mensual',
+        iconoColor: balanceIconColor,
+        icono: ICON_GAUGE,
+        metricaLabel: bal.label,
+        metricaValor: bal.valor,
+        estado: bal.estado,
+        estadoIcono: bal.estado === 'good' ? ICON_CHECK : ICON_WARN,
+        estadoHtml: bal.frase,
+        warnValue: bal.estado === 'warn',
+      },
+      {
+        titulo: 'Deuda mensual',
+        iconoColor: deudaIconColor,
+        icono: ICON_PIE,
+        metricaLabel: 'Pago en deuda mensual',
+        metricaValor: deu.valor,
+        estado: deu.estado,
+        estadoIcono: deu.estado === 'good' ? ICON_CHECK : ICON_WARN,
+        estadoHtml: deu.frase,
+      }
+    ];
+  }
+
+  function renderCard(){
+    if(!currentClient) return;
+    const slides = buildSlides(currentClient);
+    const s = slides[idx];
+    const valClass = s.warnValue ? 'm-value warn-val' : 'm-value';
+    document.getElementById('cardBody').innerHTML = `
+      <div class="card-header">${s.titulo} <span class="help-icon">?</span></div>
+      <div class="metric-row">
+        <div class="icon-circle ${s.iconoColor}">${s.icono}</div>
+        <div class="metric-text">
+          <div class="m-label">${escapeHtml(s.metricaLabel)}</div>
+          <div class="${valClass}">${escapeHtml(s.metricaValor)}</div>
+        </div>
+      </div>
+      <div class="status-box ${s.estado}">
+        ${s.estadoIcono}
+        <div>${s.estadoHtml}</div>
+      </div>
+    `;
+    document.getElementById('pageNum').textContent = idx + 1;
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === slides.length - 1;
+  }
+
+  function prevSlide(){ if(idx>0){ idx--; renderCard(); } }
+  function nextSlide(){ if(idx<2){ idx++; renderCard(); } }
+
+  function toggleExp(){
+    const btn = document.getElementById('expToggle');
+    const panel = document.getElementById('expPanel');
+    btn.classList.toggle('open');
+    panel.classList.toggle('open');
+    const isOpen = btn.classList.contains('open');
+    btn.childNodes[0].nodeValue = isOpen ? 'Ocultar detalle ' : 'Ver detalle ';
+  }
+
+  function toggleExpHelp(e){
+    e.stopPropagation();
+    document.getElementById('expHelp').classList.toggle('active');
+  }
+
+  document.addEventListener('click', e => {
+    const help = document.getElementById('expHelp');
+    if(help && !help.contains(e.target)){ help.classList.remove('active'); }
+  });
+
+  document.getElementById('clientIdInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter') buscarCliente();
+  });
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]
+    );
+  }
+</script>
+</body>
+</html>
